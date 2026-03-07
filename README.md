@@ -305,6 +305,17 @@ uv sync --all-groups && uv run pytest
 
 ---
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=Q00/ouroboros&type=Date#gh-light-mode-only">
+  <img src="https://api.star-history.com/svg?repos=Q00/ouroboros&type=Date&theme=light" alt="Star History Chart" width="100%" />
+</a>
+<a href="https://www.star-history.com/?repos=Q00/ouroboros&type=Date#gh-dark-mode-only">
+  <img src="https://api.star-history.com/svg?repos=Q00/ouroboros&type=Date&theme=dark" alt="Star History Chart" width="100%" />
+</a>
+
+---
+
 <p align="center">
   <em>"The beginning is the end, and the end is the beginning."</em>
   <br/><br/>
