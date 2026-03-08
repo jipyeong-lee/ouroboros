@@ -5,23 +5,32 @@ Ouroboros includes an interactive terminal user interface (TUI) built with [Text
 ## Launching the TUI
 
 ```bash
-# Basic launch
+# Via uvx (no install needed)
+uvx --from ouroboros-ai ouroboros tui monitor
+
+# Local development
 uv run ouroboros tui monitor
 
 # Monitor with a specific database file
 uv run ouroboros tui monitor --db-path ~/.ouroboros/ouroboros.db
 ```
 
+## Getting Started
+
+When launched, the TUI opens with a **Session Selector** screen where you pick an existing session to monitor. Once selected, it switches to the Dashboard.
+
 ## Screen Overview
 
-The TUI provides 4 screens, switchable via number keys:
+The TUI provides 4 main screens, switchable via number keys or letter shortcuts:
 
-| Key | Screen | Purpose |
-|-----|--------|---------|
-| `1` | **Dashboard** | Primary view: phase progress, AC tree, node details |
-| `2` | **Execution** | Execution timeline, phase outputs, detailed events |
-| `3` | **Logs** | Filterable log viewer with level-based coloring |
-| `4` | **Debug** | State inspector, raw events, configuration dump |
+| Key | Shortcut | Screen | Purpose |
+|-----|----------|--------|---------|
+| `1` | | **Dashboard** | Primary view: phase progress, AC tree, node details |
+| `2` | | **Execution** | Execution timeline, phase outputs, detailed events |
+| `3` | `l` | **Logs** | Filterable log viewer with level-based coloring |
+| `4` | `d` | **Debug** | State inspector, raw events, configuration dump |
+| | `s` | **Session Selector** | Switch between sessions |
+| | `e` | **Lineage** | View evolutionary lineage across generations |
 
 ## Dashboard Screen (Key: 1)
 
@@ -34,11 +43,11 @@ The dashboard is the primary monitoring view with three sections:
 |                                  |                                  |
 |  AC EXECUTION TREE               |  NODE DETAIL                     |
 |  +- root                         |                                  |
-|    +- * AC1 (executing)          |  AC: AC1                         |
-|    | +- # SubAC1 (complete)      |  Status: Executing               |
-|    | +- o SubAC2 (pending)       |  Depth: 1                        |
-|    +- o AC2 (pending)            |                                  |
-|    +- # AC3 (complete)           |  Content:                        |
+|    +- ◐ AC1 (executing)          |  AC: AC1                         |
+|    | +- ● SubAC1 (complete)      |  Status: Executing               |
+|    | +- ○ SubAC2 (pending)       |  Depth: 1                        |
+|    +- ○ AC2 (pending)            |                                  |
+|    +- ● AC3 (complete)           |  Content:                        |
 |                                  |  Create a User model with...     |
 |                                  |                                  |
 +----------------------------------+----------------------------------+
@@ -61,15 +70,15 @@ Hierarchical view of all acceptance criteria and their sub-ACs:
 
 | Icon | Status |
 |------|--------|
-| `o` (dim) | Pending -- not yet started |
-| `!` (red) | Blocked -- waiting on dependency |
-| `*` (yellow) | Executing -- currently running |
-| `#` (green) | Completed -- passed evaluation |
-| `X` (red) | Failed -- did not pass |
-| `<>` (blue) | Atomic -- leaf node, no further decomposition |
-| `<>` (cyan) | Decomposed -- has child sub-ACs |
+| `○` (dim) | Pending -- not yet started |
+| `⊘` (red) | Blocked -- waiting on dependency |
+| `◐` (yellow) | Executing -- currently running |
+| `●` (green) | Completed -- passed evaluation |
+| `✖` (red) | Failed -- did not pass |
+| `◆` (blue) | Atomic -- leaf node, no further decomposition |
+| `◇` (cyan) | Decomposed -- has child sub-ACs |
 
-**Navigation**: Use arrow keys to move through the tree. Press Enter or click to select a node and view its details in the right panel.
+**Navigation**: Use arrow keys to move through the tree. Press Enter or click to select a node and view its details in the right panel. Press `t` to focus the tree widget.
 
 ### Node Detail Panel
 
@@ -79,7 +88,7 @@ When an AC or sub-AC is selected in the tree, this panel shows:
 - **Depth**: Tree depth (0 = root, 1 = top-level AC, 2+ = sub-AC)
 - **Content**: The full acceptance criterion text
 
-## Logs Screen (Key: 3)
+## Logs Screen (Key: 3 or `l`)
 
 Filterable, scrollable log viewer with color-coded severity levels:
 
@@ -100,12 +109,20 @@ Detailed execution information:
 - **Phase outputs**: Results from each phase
 - **Tool calls**: What tools the agent used and their results
 
-## Debug Screen (Key: 4)
+## Debug Screen (Key: 4 or `d`)
 
 For troubleshooting:
 - **State inspector**: Current `TUIState` values (phase, drift, cost, AC tree)
 - **Raw events**: Unprocessed events from the EventStore
 - **Configuration**: Active pipeline and execution config
+
+## Session Selector (Key: `s`)
+
+Browse and select from available sessions. Useful when multiple workflows have been executed and you want to switch between them.
+
+## Lineage Screen (Key: `e`)
+
+View evolutionary lineage across generations when using `ooo evolve` or `ooo ralph`. Shows how seeds evolved and converged over multiple iterations.
 
 ## Keyboard Shortcuts
 
@@ -114,6 +131,8 @@ For troubleshooting:
 | Key | Action |
 |-----|--------|
 | `1` - `4` | Switch to screen 1-4 |
+| `s` | Session Selector |
+| `e` | Lineage view |
 | `q` | Quit the TUI |
 | `r` | Resume execution |
 | `p` | Pause execution |
@@ -131,6 +150,7 @@ For troubleshooting:
 
 | Key | Action |
 |-----|--------|
+| `t` | Focus AC tree widget |
 | `Up` / `Down` | Navigate AC tree |
 | `Enter` | Select AC node for detail view |
 
@@ -148,6 +168,8 @@ Key message types:
 - `PhaseChanged` -- Double Diamond phase transition
 - `ACUpdated` -- AC status change
 - `WorkflowProgressUpdated` -- AC tree structure + status
+- `ExecutionUpdated` -- session started/completed/failed/paused
+- `SubtaskUpdated` -- sub-task hierarchy updates
 - `DriftUpdated` -- drift score change
 - `CostUpdated` -- token usage / cost update
 - `ToolCallStarted` / `ToolCallCompleted` -- agent tool usage
@@ -165,6 +187,6 @@ Key message types:
 - Press `r` to resume execution if paused
 
 **Display issues**
-- Ensure your terminal supports 256 colors
+- Ensure your terminal supports 256 colors and Unicode
 - Minimum terminal size: 80 columns x 24 rows recommended
 - Try a different terminal emulator if rendering is broken
