@@ -45,14 +45,26 @@ When the user invokes this skill:
    - Track iteration, verification_history in conversation context
    - No file I/O needed — evolve_step stores all execution data in EventStore
 
-4. **Enter the loop**:
+4. **Enter the loop** (non-blocking background execution):
 
    ```
    while iteration < max_iterations:
-       # Execute with parallel agents via evolve_step
-       # QA is built into ouroboros_evolve_step — the response
-       # includes a "### QA Verdict" section automatically.
-       result = await evolve_step(lineage_id, seed_content, execute=true)
+       # Start evolve_step in background — returns immediately
+       job = await start_evolve_step(lineage_id, seed_content, execute=true)
+       job_id = job.meta["job_id"]
+       cursor = job.meta["cursor"]
+
+       # Poll for progress (non-blocking, shows intermediate state)
+       # Use timeout_seconds=60 to reduce context consumption
+       while not terminal:
+           wait_result = await job_wait(job_id, cursor, timeout_seconds=60)
+           cursor = wait_result.meta["cursor"]
+           status = wait_result.meta["status"]
+           # Report progress concisely (one line per poll)
+           terminal = status in ("completed", "failed", "cancelled")
+
+       # Fetch final result
+       result = await job_result(job_id)
 
        # Parse QA from evolve_step response text
        # (EvolveStepHandler runs QA internally and appends verdict)
@@ -78,6 +90,11 @@ When the user invokes this skill:
            # Max iterations reached
            break
    ```
+
+   **Tool mapping:**
+   - `start_evolve_step` = `ouroboros_start_evolve_step`
+   - `job_wait` = `ouroboros_job_wait`
+   - `job_result` = `ouroboros_job_result`
 
 4. **On termination**, display a next-step:
    - **Success** (QA passed): `Next: ooo evaluate for formal 3-stage verification`
@@ -117,9 +134,12 @@ This is the key phrase. Ralph does not give up:
 User: ooo ralph fix all failing tests
 
 [Ralph Iteration 1/10]
-Executing in parallel...
-Fixing test failures...
-Running QA...
+Started background execution (job_abc123)
+Polling progress...
+  Phase: Executing | AC Progress: 1/3
+  Phase: Executing | AC Progress: 2/3
+  Phase: Executing | AC Progress: 3/3
+Execution complete. Fetching result...
 
 QA Verdict: REVISE (score: 0.65)
 Differences:
