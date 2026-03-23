@@ -39,11 +39,17 @@ dashboard = [
 ouroboros = "ouroboros.cli.main:app"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/ouroboros/__init__.py"
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "guess-next-dev"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/ouroboros/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ouroboros"]
@@ -90,6 +96,7 @@ python_functions = ["test_*"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = ["src/ouroboros/_version.py"]
 
 [tool.ruff.lint]
 select = [
